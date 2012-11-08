@@ -1,10 +1,10 @@
 {
-  "name": "node-screener",
-  "version": "0.0.0",
-  "description": "Recursively screen (whitelist) javascript objects with optional and flexible validation of fields. Useful to filter documents fetched by Mongoose and for any REST APIs.",
+  "name": "screener",
+  "version": "0.0.2",
+  "description": "Recursively screen and whitelists javascript objects with optional and flexible validation/processing of fields. Useful for filtering documents fetched by Mongoose in Node.JS and for any REST API.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test.js"
   },
   "repository": {
     "type": "git",

@@ -1,1 +1,1 @@
-exports = require('./screener');
+module.exports = require('./screener');

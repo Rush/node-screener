@@ -1,19 +1,34 @@
-
 var screens = {
-	'ObjectId': /[0-9a-fA-F]{24}/
+	ObjectId: /[0-9a-fA-F]{24}/,
+	'string': function(value) {
+		if(typeof value === 'string') return value;
+	},
+	'number': function(value) {
+		if(typeof value === 'number') return value;
+	},
+	'boolean': function(value) {
+		if(typeof value === 'boolean') return value;
+	},
+	'function': function(value) {
+		if(typeof value === 'function') return value;
+	},
+	'object': function(value) {
+
+	}
 };
+
+function MergeObject(object) {
+	this.object = object;
+}
 
 
 function specType(spec) {
 	if(typeof spec === 'object') {
-		if(Array.isArray(spec))
-			return 'array';
-		if(spec instanceof RegExp)
-			return "regexp";
+		if(Array.isArray(spec)) return 'array';
+		if(spec instanceof RegExp) return "regexp";
+		if(spec === null) return "null";
 		return 'object';
-	}
-	else
-		return typeof spec;
+	} else return typeof spec;
 }
 
 
@@ -22,12 +37,11 @@ function screen(object, spec, globalSpec) {
 
 	var specT = specType(spec);
 	if(specT === 'array') {
-		if(!Array.isArray(object))
-			return undefined;
+		if(!Array.isArray(object)) return undefined;
 
 		result = [];
 		spec = spec[0];
-		for(var i = 0;i < object.length;++i) {
+		for(var i = 0; i < object.length; ++i) {
 			var res = screen(object[i], spec, globalSpec);
 
 			if(typeof res !== 'undefined') {
@@ -35,11 +49,9 @@ function screen(object, spec, globalSpec) {
 			}
 		}
 		return result;
-	}
-	else if(specT === 'string') {
+	} else if(specT === 'string') {
 		return screen(object, screens[spec], globalSpec);
-	}
-	else if(specT === 'function') {
+	} else if(specT === 'function') {
 		return spec(object);
 	}
 	// true means whitelist whole object
@@ -53,8 +65,7 @@ function screen(object, spec, globalSpec) {
 			if(specType(object[prop]) === 'object') {
 				propResult = screen(object[prop], false, globalSpec);
 				if(typeof propResult !== 'undefined') {
-					if(!result)
-						result = {};
+					if(!result) result = {};
 					result[prop] = propResult;
 				}
 			}
@@ -62,39 +73,42 @@ function screen(object, spec, globalSpec) {
 				if(object[prop] !== 'undefined') {
 					propResult = screen(object[prop], globalSpec[prop], globalSpec);
 					if(typeof propResult !== 'undefined') {
-						if(!result)
-							result = {};
+						if(!result) result = {};
 						result[prop] = propResult;
 					}
 				}
 			}
 		}
 		return result;
-	}
-	else if(specT === 'regexp' && typeof object === 'string') {
+	} else if(specT === 'regexp' && typeof object === 'string') {
 		var reMatch = object.match(spec);
-		if(reMatch && reMatch[0].length == object.length)
-			return object;
-	}
-	else if(specT === 'object') {
+		if(reMatch && reMatch[0].length == object.length) return object;
+	} else if(specT === 'object') {
 		result = {};
 		// check for existance of properties in the global spec (which can whitelist fields in any object)
-
 		if(typeof globalSpec === 'object') {
 			for(prop in object) {
-				if(typeof globalSpec[prop] === 'undefined')
-					continue;
+				if(typeof globalSpec[prop] === 'undefined') continue;
 				propResult = screen(object[prop], globalSpec[prop], globalSpec);
+
 				if(typeof propResult !== 'undefined') {
 					result[prop] = propResult;
-				}			
+				}
 			}
 		}
 		for(prop in spec) {
-			if(typeof object[prop] === 'undefined')
-				continue;
+			if(typeof object[prop] === 'undefined') continue;
 			propResult = screen(object[prop], spec[prop], globalSpec);
-			if(typeof propResult !== 'undefined') {
+
+			// in case of using screen.merge, get the result's properties
+			// and copy to the current result
+			if(propResult instanceof MergeObject) {
+				for(var propMerge in propResult.object) {
+					result[propMerge] = propResult.object[propMerge];
+				}
+			}
+			// otherwise copy the result normally
+			else if(typeof propResult !== 'undefined') {
 				result[prop] = propResult;
 			}
 
@@ -102,5 +116,49 @@ function screen(object, spec, globalSpec) {
 		return result;
 	}
 }
+
+screen.define = function(name, screenFunction) {
+	screens[name] = screenFunction;
+};
+
+screen.or = function() {
+	var screens = arguments;
+	return function(value) {
+		var i, res;
+		var input = value, output;
+		for(i = 0; i < screens.length;++i) {
+			res = screen(input, screens[i]);
+			if(typeof res !== 'undefined') {
+				input = res;
+				output = res;
+			}
+		}
+		return output;
+	};
+};
+
+screen.and = function() {
+	var screens = arguments;
+	return function(value) {
+		var i;
+		var res = value;
+		for(i = 0; i < screens.length;++i) {
+			console.log(res, screens[i]);
+			res = screen(res, screens[i]);
+			console.log("res", res);
+			if(typeof res === 'undefined')
+				return undefined;
+		}
+		return res;
+	};
+};
+
+screen.merge = function(spec) {
+	return function(value) {
+		var res = screen(value, spec);
+		if(typeof res !== 'undefined')
+			return new MergeObject(res);
+	};
+};
 
 exports.screen = screen;
