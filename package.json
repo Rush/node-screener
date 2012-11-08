@@ -1,0 +1,24 @@
+{
+  "name": "node-screener",
+  "version": "0.0.0",
+  "description": "Recursively screen (whitelist) javascript objects with optional and flexible validation of fields. Useful to filter documents fetched by Mongoose and for any REST APIs.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:RushPL/node-screener.git"
+  },
+  "keywords": [
+    "node",
+    "screening",
+    "whitelist",
+    "filter",
+    "objects",
+    "rest",
+    "mongoose"
+  ],
+  "author": "Damian Kaczmarek",
+  "license": "BSD"
+}
