@@ -1,9 +1,76 @@
 node-screener
 =============
 
-Recursively screen and whitelists javascript objects with optional and flexible validation/processing of fields. Useful for filtering documents fetched by Mongoose in Node.JS and for any REST API.
+Screen and whitelists javascript objects with optional and flexible validation/processing of fields. Useful for filtering documents fetched by Mongoose in Node.JS and for any REST API. It can whitelist objects with complex multi-level structure.
 
-Examples
+Short examples
+=============
+
+    var screen = require('screener').screen;
+    var object = {
+      _id: "503cb6d92c32a8cd06006c53",
+      user: { name: "Joe Doe", birthdate: "04.07.1980"},
+      location: { lat: 16.5015636, lon: 52.1971881 }
+    };
+
+    var result = screen(object, {
+      user: {
+        name: 'string', // same effect would be if passed /.*/ regexp
+        birthdate: /\d\d\.\d\d\.\d\d\d\d/
+      }
+      location: {lat: 'number', lon: 'number'}
+    });
+
+Result will be
+
+    {
+      user: { name: "Joe Doe", birthdate: "04.07.1980"},
+      location: { lat: 16.5015636, lon: 52.1971881 }
+    };
+
+It can also handle arrays, custom screens (validators), modify values and you can OR/AND multiple screens for complex logic. Cool feature is that you can merge sub-object into the parent object, like in the below short example:
+
+    var result = screen(object, {
+      user: screen.merge({
+        name: 'string', // same effect would be if passed /.*/ regexp
+        birthdate: /\d\d\.\d\d\.\d\d\d\d/
+      });
+      location: screen.merge({lat: 'number', lon: 'number'});
+    });
+
+Result will be:
+
+    {
+      name: "Joe Doe",
+      birthdate: "04.07.1980",
+      lat: 16.5015636,
+      lon: 52.1971881
+    };
+
+You can register custom validators and you can provide any function as a validator.
+
+Available screens
+=============
+
+Basic screens:
+
+* true - accept any object
+* 'number' - accept the number type
+* 'boolean' - accept the boolean type
+* 'string' - accept the string type
+* 'function' - accept the function type
+* 'object' - accept the object type if it is not an array, not a regexp and not null
+* RegExp - check if a string matches with the given RegExp, RegExp needs to match the WHOLE string
+
+Advanced screens:
+
+* screen.or - accepts any number of screens as its arguments and applies them in sequential order. If any one of them returns a value, the whole screen will return a value. Not that if a particular screen modified the value, it will be passed to the consequent screen.
+* screen.and - accepts any number of screens as its arguments and applies them in sequential order. Each of them needs to return a value for the whole screen to succeed. Note that this could be used to chain custom modifier screens. You could pass `screen.and('string', function(val) {return val.toUpperCase()})` and it will both validate and modify the value at the same time.
+* screen.merge - not really a screen in itself but you can pass a spec to it and it will merge its screening result to the parent object. See examples.
+
+Custom screens can be defined using `screen.define(name, function)` or by putting the function as a screen inside the spec.
+
+Long examples
 =============
 
 Specification for an object will be called a spec. Given a spec, screen will recursively
