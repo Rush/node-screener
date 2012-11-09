@@ -48,11 +48,25 @@ Result will be:
     };
 
 You can register custom validators and you can provide any function as a validator.
+You can reuse your screens/validator for simple form validation as well!
+
+        // Let's define an email screener once per application
+        screen.define('email', /(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\
+        ".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA
+        -Z\-0-9]+\.)+[a-zA-Z]{2,}))/);
+        
+Now we would validate some custom data with it easily!
+
+        var validatedEmail = screen(req.param('email'), 'email');
+        if(!validatedEmail)
+            console.log("Email not valid!");
+
 
 Available screens
 =============
 
-Basic screens:
+Basic screens
+-------------
 
 * true - accept any object
 * 'number' - accept the number type
@@ -62,11 +76,15 @@ Basic screens:
 * 'object' - accept the object type if it is not an array, not a regexp and not null
 * RegExp - check if a string matches with the given RegExp, RegExp needs to match the WHOLE string
 
-Advanced screens:
+Advanced screens
+-------------
 
 * screen.or - accepts any number of screens as its arguments and applies them in sequential order. If any one of them returns a value, the whole screen will return a value. Not that if a particular screen modified the value, it will be passed to the consequent screen.
 * screen.and - accepts any number of screens as its arguments and applies them in sequential order. Each of them needs to return a value for the whole screen to succeed. Note that this could be used to chain custom modifier screens. You could pass `screen.and('string', function(val) {return val.toUpperCase()})` and it will both validate and modify the value at the same time.
 * screen.merge - not really a screen in itself but you can pass a spec to it and it will merge its screening result to the parent object. See examples.
+
+Custom screens
+-------------
 
 Custom screens can be defined using `screen.define(name, function)` or by putting the function as a screen inside the spec.
 
@@ -196,14 +214,3 @@ Let's improve our example a little bit:
 
 In the above example we made use of regexp screeners which approve the content that fully matches the regexp (/a/ will not match "abc"). We have also demonstrated the use of custom validators. Now you hopefully understand the basics of this module. ;)
 
-Should you want to do more complex stuff, see the below quick examples:
-
-    var mergeTest = {address: {street: "Słowackiego", building: 5}};
-  
-    var res = screen(mergeTest, {address: screen.merge({street: 'string', building: 'number'})});
-
-And the result is:
-
-    {street: "Słowackiego", building: 5}
-
-With this method you can easily flatten your objects. There is also `screen.or` and `screen.and` which do logical operation on screeners given as consequent arguments.
