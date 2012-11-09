@@ -1,7 +1,7 @@
 node-screener
 =============
 
-Screen and whitelists javascript objects with optional and flexible validation/processing of fields. Useful for filtering documents fetched by Mongoose in Node.JS and for any REST API. It can whitelist objects with complex multi-level structure.
+Screen and whitelists javascript objects with optional and flexible validation/processing of fields. Useful for filtering documents fetched by Mongoose in Node.JS and for any REST API. It can whitelist objects with complex multi-level structure. Could be used for form data validation.
 
 Short examples
 =============
@@ -51,9 +51,7 @@ You can register custom validators and you can provide any function as a validat
 You can reuse your screens/validator for simple form validation as well!
 
         // Let's define an email screener once per application
-        screen.define('email', /(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\
-        ".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA
-        -Z\-0-9]+\.)+[a-zA-Z]{2,}))/);
+        screen.define('email', /(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))/);
         
 Now we would validate some custom data with it easily!
 
@@ -61,6 +59,12 @@ Now we would validate some custom data with it easily!
         if(!validatedEmail)
             console.log("Email not valid!");
 
+API
+=============
+
+`screen(object, screen)` - returns a screened object or `undefined`
+
+`screen.define(string, screen)` - define a custom screen that will be referenced by a string
 
 Available screens
 =============
@@ -68,6 +72,7 @@ Available screens
 Basic screens
 -------------
 
+* object - tree-like specification having the same object properties/keys as the object being screened
 * true - accept any object
 * 'number' - accept the number type
 * 'boolean' - accept the boolean type
@@ -79,9 +84,9 @@ Basic screens
 Advanced screens
 -------------
 
-* screen.or - accepts any number of screens as its arguments and applies them in sequential order. If any one of them returns a value, the whole screen will return a value. Not that if a particular screen modified the value, it will be passed to the consequent screen.
-* screen.and - accepts any number of screens as its arguments and applies them in sequential order. Each of them needs to return a value for the whole screen to succeed. Note that this could be used to chain custom modifier screens. You could pass `screen.and('string', function(val) {return val.toUpperCase()})` and it will both validate and modify the value at the same time.
-* screen.merge - not really a screen in itself but you can pass a spec to it and it will merge its screening result to the parent object. See examples.
+* `screen.or(screen1, ... ,screenN)` - accepts any number of screens as its arguments and applies them in sequential order. If any one of them returns a value, the whole screen will return a value. Not that if a particular screen modified the value, it will be passed to the consequent screen.
+* `screen.and(screen1, ..., screenN)` - accepts any number of screens as its arguments and applies them in sequential order. Each of them needs to return a value for the whole screen to succeed. Note that this could be used to chain custom modifier screens. You could pass `screen.and('string', function(val) {return val.toUpperCase()})` and it will both validate and modify the value at the same time.
+* `screen.merge(spec)` - not really a screen in itself but you can pass a spec to it and it will merge its screening result to the parent object. See examples.
 
 Custom screens
 -------------
