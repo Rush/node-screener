@@ -32,17 +32,23 @@ function specType(spec) {
 }
 
 
-function screen(object, spec, globalSpec) {
+function screen(object, spec, _options) {
 	var result, prop, propResult;
+  var options = _options || {};
+  var globalSpec = options.globalSpec;
 
 	var specT = specType(spec);
 	if(specT === 'array') {
-		if(!Array.isArray(object)) return undefined;
+		if(!Array.isArray(object)) {
+      if(options.fill)
+        return [];
+      return undefined;
+    }
 
 		result = [];
 		spec = spec[0];
 		for(var i = 0; i < object.length; ++i) {
-			var res = screen(object[i], spec, globalSpec);
+			var res = screen(object[i], spec, options);
 
 			if(typeof res !== 'undefined') {
 				result.push(res);
@@ -50,7 +56,7 @@ function screen(object, spec, globalSpec) {
 		}
 		return result;
 	} else if(specT === 'string') {
-		return screen(object, screens[spec], globalSpec);
+		return screen(object, screens[spec], options);
 	} else if(specT === 'function') {
 		return spec(object);
 	}
@@ -63,15 +69,18 @@ function screen(object, spec, globalSpec) {
 		for(prop in object) {
 
 			if(specType(object[prop]) === 'object') {
-				propResult = screen(object[prop], false, globalSpec);
+				propResult = screen(object[prop], false, options);
 				if(typeof propResult !== 'undefined') {
 					if(!result) result = {};
 					result[prop] = propResult;
 				}
+        else if(options.fill) {
+          result[prop] = null;
+        }
 			}
 			if(typeof globalSpec[prop] !== 'undefined') {
 				if(object[prop] !== 'undefined') {
-					propResult = screen(object[prop], globalSpec[prop], globalSpec);
+					propResult = screen(object[prop], globalSpec[prop], options);
 					if(typeof propResult !== 'undefined') {
 						if(!result) result = {};
 						result[prop] = propResult;
@@ -89,7 +98,7 @@ function screen(object, spec, globalSpec) {
 		if(typeof globalSpec === 'object') {
 			for(prop in object) {
 				if(typeof globalSpec[prop] === 'undefined') continue;
-				propResult = screen(object[prop], globalSpec[prop], globalSpec);
+				propResult = screen(object[prop], globalSpec[prop], options);
 
 				if(typeof propResult !== 'undefined') {
 					result[prop] = propResult;
@@ -97,8 +106,12 @@ function screen(object, spec, globalSpec) {
 			}
 		}
 		for(prop in spec) {
-			if(typeof object[prop] === 'undefined') continue;
-			propResult = screen(object[prop], spec[prop], globalSpec);
+			if(typeof object[prop] === 'undefined') {
+        if(options.fill)
+          result[prop] = null;
+        continue;
+      }
+			propResult = screen(object[prop], spec[prop], options);
 
 			// in case of using screen.merge, get the result's properties
 			// and copy to the current result
@@ -111,11 +124,20 @@ function screen(object, spec, globalSpec) {
 			else if(typeof propResult !== 'undefined') {
 				result[prop] = propResult;
 			}
+      else if(options.fill) {
+        result[prop] = null;
+      }
 
 		}
 		return result;
 	}
 }
+
+screen.api = function(object, spec, _options) {
+  var options = {} || _options;
+  options.fill = true;
+  return screen(object, spec, options);
+};
 
 screen.define = function(name, screenFunction) {
 	screens[name] = screenFunction;
@@ -145,7 +167,6 @@ screen.and = function() {
 		for(i = 0; i < screens.length;++i) {
 			console.log(res, screens[i]);
 			res = screen(res, screens[i]);
-			console.log("res", res);
 			if(typeof res === 'undefined')
 				return undefined;
 		}
