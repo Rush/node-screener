@@ -8,6 +8,7 @@ Node use
 		npm install screener
 
 Require module:
+
 		var screen = require('screener').screen;
 		... // see examples for building specifications
 		screen(yourObject, objectSpecification);
