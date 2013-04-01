@@ -218,16 +218,14 @@ describe('require(\'screener\')', function() {
 			assert.deepEqual(res, {street: "Słowackiego", building: 5});
 		});
 
-		it('should work with custom function validator', function() {
-
-
-
+		it('should handle null fields with "true" screen', function() {
+			var object = {name: "John", title: null};
+			var res = screen(object, {name: true, title: true});
+			assert.deepEqual(res, {name: "John", title: null})
 		});
 
 	});
 });
-
-
 
 screen.define('address', function(value) {
 	return screen(value, {

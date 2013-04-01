@@ -3,6 +3,24 @@ node-screener
 
 Screen and whitelists javascript objects with optional and flexible validation/processing of fields. Useful for filtering documents fetched by Mongoose in Node.JS and for any REST API. It can whitelist objects with complex multi-level structure. Could be used for form data validation.
 
+Node use
+============
+		npm install screener
+
+Require module:
+		var screen = require('screener').screen;
+		... // see examples for building specifications
+		screen(yourObject, objectSpecification);
+
+Browser use
+============
+Module is AMD/RequireJS compatible. Put screener.js into your source directory.
+
+		require(['screener'], function(screen) [
+			... // see examples for building specifications
+			screen(yourObject, objectSpecification);
+		});
+
 Short examples
 =============
 
@@ -86,12 +104,12 @@ Advanced screens
 
 * `screen.or(screen1, ... ,screenN)` - accepts any number of screens as its arguments and applies them in sequential order. If any one of them returns a value, the whole screen will return a value. Not that if a particular screen modified the value, it will be passed to the consequent screen.
 * `screen.and(screen1, ..., screenN)` - accepts any number of screens as its arguments and applies them in sequential order. Each of them needs to return a value for the whole screen to succeed. Note that this could be used to chain custom modifier screens. You could pass `screen.and('string', function(val) {return val.toUpperCase()})` and it will both validate and modify the value at the same time.
-* `screen.merge(spec)` - not really a screen in itself but you can pass a spec to it and it will merge its screening result to the parent object. See examples.
+* `screen.merge(spec)` - not really a screen in itself but you can pass a spec to it and it will merge its screening result to the parent object. You can think of it as flattening. See examples.
 
 Custom screens
 -------------
 
-Custom screens can be defined using `screen.define(name, function)` or by putting the function as a screen inside the spec.
+Custom screens can be defined using `screen.define(name, function)` or by putting the function or regexp as a screen inside the spec.
 
 Long examples
 =============
