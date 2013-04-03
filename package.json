@@ -1,6 +1,6 @@
 {
   "name": "screener",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Recursively screen and whitelists javascript objects with optional and flexible validation/processing of fields. Useful for filtering documents fetched by Mongoose in Node.JS and for any REST API. Supports AMD and in-browser use, could be used to validate and auto-fix form fields.",
   "main": "index.js",
   "scripts": {

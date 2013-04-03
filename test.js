@@ -41,6 +41,15 @@ var object = [{
 	"_id": "503cb6d92c32a8cd06006c59",
 }];
 
+screen.define('address', function(value) {
+	return screen(value, {
+		street: 'string',
+		building: 'number',
+		city: 'string',
+		postcode: /\d\d-\d\d\d/
+	});
+});
+
 //screen(obj, [false], {_id: 'ObjectId'});
 describe('require(\'screener\')', function() {
 	describe('.screen', function() {
@@ -69,8 +78,6 @@ describe('require(\'screener\')', function() {
 					}
 				}]
 			}]);
-
-			console.log(JSON.stringify(res, null, 4));
 
 			assert.deepEqual(res, [{
 				"_id": "503cb6d92c32a8cd06006c50",
@@ -162,8 +169,6 @@ describe('require(\'screener\')', function() {
 				}],
 			}]);
 
-			console.log(JSON.stringify(res, null, 4));
-
 			assert.deepEqual(res, [{
 				"person": {
 					"user": {
@@ -224,17 +229,52 @@ describe('require(\'screener\')', function() {
 			assert.deepEqual(res, {name: "John", title: null})
 		});
 
+		it('should return undefined for missing field', function() {
+			assert.deepEqual(screen.exact({
+				name: 'Damian',
+			}, {name: true, surname: true}), undefined);
+		});
+
+		it('should return undefined for bad type', function() {
+			assert.deepEqual(screen.exact({
+				name: 'Damian',
+				surname: 5
+			}, {name: 'string', surname: 'string'}), undefined);
+		});
+		it('should succeed when type is fixed', function() {
+			var input = {
+				name: 'Damian',
+				surname: 'Kaczmarek'
+			};
+			assert.deepEqual(screen.exact(input, {name: 'string', surname: 'string'}), input);
+		});
+
+		it('should return undefined for non-array when requested array', function() {
+			assert.deepEqual(screen.exact({
+				name: 'Damian',
+				items: 'test'
+			}, {name: true, items : ['string']}), undefined);
+		});
+
+		it('should succeed when fixed array', function() {
+			var input = {
+				name: 'Damian',
+				items: ['a', 'b', 'c']
+			};
+			assert.deepEqual(screen.exact(input, {name: true, items: ['string']}), input);
+		});
+		it('should return undefined when one array element has wrong type', function() {
+			assert.deepEqual(screen.exact({
+				name: 'Damian',
+				items: ['a', 'b', 'c', 5]
+			}, {name: true, items: ['string']}), undefined);
+		});
+
+
 	});
 });
 
-screen.define('address', function(value) {
-	return screen(value, {
-		street: 'string',
-		building: 'number',
-		city: 'string',
-		postcode: /\d\d-\d\d\d/
-	});
-});
+
 
 res = screen(object, [{
 	person: {
@@ -252,5 +292,6 @@ res = screen(object, [{
 		}
 	}],
 }]);
+
 
 //console.log(JSON.stringify(res, null, 4));

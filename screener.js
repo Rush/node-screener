@@ -28,6 +28,12 @@
  		this.object = object;
  	}
 
+ 	function mapTypeToScreen(type) {
+ 		if(type === Boolean) return 'boolean';
+		if(type === Number) return 'number';
+		if(type === String) return 'number';
+ 	}
+
 
  	function specType(spec) {
  		if (typeof spec === 'object') {
@@ -46,6 +52,9 @@
  		var specT = specType(spec);
  		if (specT === 'array') {
  			if (!Array.isArray(object)) {
+
+ 				if (options.exact) throw new Error("Field is not array");
+
  				if (options.fill) return [];
  				return undefined;
  			}
@@ -57,6 +66,9 @@
 
  				if (typeof res !== 'undefined') {
  					result.push(res);
+ 				}
+ 				else if(options.exact) {
+ 					throw new Error("Element " + i + " in array field has wrong type");
  				}
  			}
  			return result;
@@ -70,6 +82,7 @@
  			return object;
  		}
  		// false means process to only use global white list - recursively
+ 		// TODO: rethink this feature!
  		else if (specT === 'boolean' && spec === false && specType(object) === 'object') {
  			for (prop in object) {
 
@@ -111,6 +124,7 @@
  			}
  			for (prop in spec) {
  				if (typeof object[prop] === 'undefined') {
+ 					if (options.exact) throw new Error("Missing field: " + prop);
  					if (options.fill) result[prop] = null;
  					continue;
  				}
@@ -126,7 +140,13 @@
  				// otherwise copy the result normally
  				else if (typeof propResult !== 'undefined') {
  					result[prop] = propResult;
- 				} else if (options.fill) {
+ 				}
+ 				// throw error when missing field
+ 				else if(options.exact) {
+ 					throw new Error("Screen failed for: " + prop);
+ 				}
+ 				// or fill with null if requested
+ 				else if (options.fill) {
  					result[prop] = null;
  				}
 
@@ -140,6 +160,16 @@
  		options.fill = true;
  		return screen(object, spec, options);
  	};
+
+ 	screen.exact = function(object, spec, _options) {
+ 		var options = {} || _options;
+ 		options.exact = true;
+ 		try {
+ 			return screen(object, spec, options);
+ 		} catch(e) {
+ 			return undefined;
+ 		}
+ 	}
 
  	screen.define = function(name, screenFunction) {
  		screens[name] = screenFunction;
@@ -162,13 +192,13 @@
  		};
  	};
 
+ 	// TODO: AND should respect options
  	screen.and = function() {
  		var screens = arguments;
  		return function(value) {
  			var i;
  			var res = value;
  			for (i = 0; i < screens.length; ++i) {
- 				console.log(res, screens[i]);
  				res = screen(res, screens[i]);
  				if (typeof res === 'undefined') return undefined;
  			}
@@ -176,9 +206,9 @@
  		};
  	};
 
- 	screen.merge = function(spec) {
+ 	screen.merge = function(spec, options) {
  		return function(value) {
- 			var res = screen(value, spec);
+ 			var res = screen(value, spec, options);
  			if (typeof res !== 'undefined') return new MergeObject(res);
  		};
  	};

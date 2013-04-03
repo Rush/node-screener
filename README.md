@@ -3,6 +3,23 @@ node-screener
 
 Screen and whitelists javascript objects with optional and flexible validation/processing of fields. Useful for filtering documents fetched by Mongoose in Node.JS and for any REST API. It can whitelist objects with complex multi-level structure. Could be used for form data validation.
 
+Features
+============
+
+* Whitelist objects recursively according to specification. (`screen`)
+* Prepare objects for API output - whitelist objects and fill missing fields. (`screen.api`)
+* Validate objects to match specification exactly. (`screen.exact`)
+* Easily define custom screening functions via functions, regexps and optionally register and recall them using a name.
+* Node.JS and browser support via AMD/Require.JS
+* Mongoose-like type specification
+
+Possible uses
+============
+* Define REST-API through specification and use it to validate output of Mongoose data that has been populated and is a tree-like structure.
+* Validate complex objects recieved from other services like Paypal or third party REST-APIs.
+* Validate form data and even automatically fix it - a custom screen can for example clear whitespace.
+* Recursively process/fix complex tree-like data structures with custom screens.
+
 Node use
 ============
 		npm install screener
@@ -28,7 +45,8 @@ Short examples
     var object = {
       _id: "503cb6d92c32a8cd06006c53",
       user: { name: "Joe Doe", birthdate: "04.07.1980"},
-      location: { lat: 16.5015636, lon: 52.1971881 }
+      location: { lat: 16.5015636, lon: 52.1971881 },
+			luckyNumbers: [3, 9, "test", 123]
     };
 
     var result = screen(object, {
@@ -36,7 +54,8 @@ Short examples
         name: 'string', // same effect would be if passed /.*/ regexp
         birthdate: /\d\d\.\d\d\.\d\d\d\d/
       }
-      location: {lat: 'number', lon: 'number'}
+      location: {lat: 'number', lon: 'number'},
+			luckyNumbers: ['number'] // means = array of numbers
     });
 
 Result will be
@@ -82,7 +101,13 @@ API
 
 `screen(object, screen)` - returns a screened object or `undefined`
 
+`screen.api(object, screen)` - returns a screened object or `undefined` but missing fields will be set to 'null' instead of ignored
+
+`screen.exact(object, screen)` - returns screened object only if it fully matched the given screen specification
+
 `screen.define(string, screen)` - define a custom screen that will be referenced by a string
+
+
 
 Available screens
 =============
@@ -237,3 +262,4 @@ Let's improve our example a little bit:
 
 In the above example we made use of regexp screeners which approve the content that fully matches the regexp (/a/ will not match "abc"). We have also demonstrated the use of custom validators. Now you hopefully understand the basics of this module. ;)
 
+Use `screen.api` or `screen.exact` to get desired behaviour.
