@@ -122,10 +122,23 @@
  					}
  				}
  			}
+			if(!object) {
+				if(options.fill)
+					object = {};
+				else if(options.exact)
+					throw new Error("Missing object: " + prop);
+				else
+					return undefined;
+			}
  			for (prop in spec) {
  				if (typeof object[prop] === 'undefined') {
  					if (options.exact) throw new Error("Missing field: " + prop);
- 					if (options.fill) result[prop] = null;
+ 					if (options.fill) {
+				  	if(specType(spec[prop]) === 'array')
+              result[prop] = [];
+            else
+							result[prop] = null;
+					}
  					continue;
  				}
  				propResult = screen(object[prop], spec[prop], options);
